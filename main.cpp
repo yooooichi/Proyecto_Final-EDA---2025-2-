@@ -51,8 +51,22 @@ class Persona {
     setCorreo(h);
     setEstado(i);
   }
-  
+
+  void MostrarPersona() {
+    cout << "DNI: " << getDNI() << endl;
+    cout << "Nombres: " << getNombres() << endl;
+    cout << "Apellidos: " << getApellidos() << endl;
+    cout << "Nacionalidad: " << getNacionalidad() << endl;
+    cout << "Lugar de nacimiento: " << getLugar_Nacimiento() << endl;
+    cout << "Dirección: " << getDireccion() << endl;
+    cout << "Telefono: " << getTelefono() << endl;
+    cout << "Correo: " << getCorreo() << endl;
+    cout << "Estado civil: " << getEstado() << endl;
+  }
 };
+
+ofstream archivoDatos("datos.csv");
+
 
 int main() {
 
