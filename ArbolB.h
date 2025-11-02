@@ -3,52 +3,40 @@ using namespace std;
 
 const int T = 3; // Grado mínimo del árbol B
 
-class BTreeNode {
-public:
-    int *keys;
-    BTreeNode **C;
-    int n;
-    bool leaf;
-
-    BTreeNode(bool _leaf);
-
-    // destructor de BTreeNode
-    ~BTreeNode() {
-        // se libera la memoria de los nodos hijos recursivamente
-        if (!leaf) {
-            for (int i = 0; i <= n; i++) {
-                // C[i] es un puntero a otro BTreeNode
-                // al hacer 'delete', se llamará a su propio destructor.
-                delete C[i];
-            }
-        }
-        // liberar la memoria de los arrays de este nodo
-        delete[] keys;
-        delete[] C;
-    }
-
-    void traverse();
-    void insertNonFull(int k);
-    void splitChild(int i, BTreeNode *y);
-    void remove(int k);
-    int findKey(int k);
-    void removeFromLeaf(int idx);
-    void removeFromNonLeaf(int idx);
-    int getPred(int idx);
-    int getSucc(int idx);
-    void fill(int idx);
-    void borrowFromPrev(int idx);
-    void borrowFromNext(int idx);
-    void merge(int idx);
-
-    friend class BTree;
-};
-
 class BTree {
-public:
+
+private:
+    class BTreeNode { //ahora BtreeNode es una clase anidada dentro de BTree
+    public:
+        int *keys;
+        BTreeNode **C;
+        int n;
+        bool leaf;
+
+        BTreeNode(bool _leaf);
+        ~BTreeNode();
+
+        //metodos
+        void traverse();
+        void insertNonFull(int k);
+        void splitChild(int i, BTreeNode *y);
+        void remove(int k);
+        int findKey(int k);
+        void removeFromLeaf(int idx);
+        void removeFromNonLeaf(int idx);
+        int getPred(int idx);
+        int getSucc(int idx);
+        void fill(int idx);
+        void borrowFromPrev(int idx);
+        void borrowFromNext(int idx);
+        void merge(int idx);
+
+        //friend class BTree;
+    };
     BTreeNode *root;
     int t;
 
+public:
     BTree() {
         root = nullptr;
         t = T;
@@ -69,15 +57,30 @@ public:
 };
 
 // ------------------ Métodos de BTreeNode ------------------
-
-BTreeNode::BTreeNode(bool _leaf) {
+// se agrega el prefijo 'BTree::' para indicar que BTreeNode es una clase anidada dentro de BTree
+BTree::BTreeNode::BTreeNode(bool _leaf) {
     leaf = _leaf;
     keys = new int[2 * T - 1];
     C = new BTreeNode *[2 * T];
     n = 0;
 }
 
-void BTreeNode::traverse() {
+// destructor de BTreeNode
+BTree::BTreeNode::~BTreeNode() {
+    // se libera la memoria de los nodos hijos recursivamente
+    if (!leaf) {
+        for (int i = 0; i <= n; i++) {
+            // C[i] es un puntero a otro BTreeNode
+            // al hacer 'delete', se llamará a su propio destructor.
+            delete C[i];
+        }
+    }
+    // liberar la memoria de los arrays de este nodo
+    delete[] keys;
+    delete[] C;
+}
+
+void BTree::BTreeNode::traverse() {
     for (int i = 0; i < n; i++) {
         if (!leaf)
             C[i]->traverse();
@@ -109,7 +112,7 @@ void BTree::insert(int k) {
     }
 }
 
-void BTreeNode::insertNonFull(int k) {
+void BTree::BTreeNode::insertNonFull(int k) {
     int i = n - 1;
     if (leaf) {
         while (i >= 0 && keys[i] > k) {
@@ -130,7 +133,7 @@ void BTreeNode::insertNonFull(int k) {
     }
 }
 
-void BTreeNode::splitChild(int i, BTreeNode *y) {
+void BTree::BTreeNode::splitChild(int i, BTreeNode *y) {
     BTreeNode *z = new BTreeNode(y->leaf);
     z->n = T - 1;
 
@@ -182,7 +185,7 @@ void BTree::remove(int k) {
     }
 }
 
-void BTreeNode::remove(int k) {
+void BTree::BTreeNode::remove(int k) {
     int idx = findKey(k);
 
     if (idx < n && keys[idx] == k) {
@@ -208,20 +211,20 @@ void BTreeNode::remove(int k) {
     }
 }
 
-int BTreeNode::findKey(int k) {
+int BTree::BTreeNode::findKey(int k) {
     int idx = 0;
     while (idx < n && keys[idx] < k)
         ++idx;
     return idx;
 }
 
-void BTreeNode::removeFromLeaf(int idx) {
+void BTree::BTreeNode::removeFromLeaf(int idx) {
     for (int i = idx + 1; i < n; ++i)
         keys[i - 1] = keys[i];
     n--;
 }
 
-void BTreeNode::removeFromNonLeaf(int idx) {
+void BTree::BTreeNode::removeFromNonLeaf(int idx) {
     int k = keys[idx];
 
     if (C[idx]->n >= T) {
@@ -238,21 +241,21 @@ void BTreeNode::removeFromNonLeaf(int idx) {
     }
 }
 
-int BTreeNode::getPred(int idx) {
+int BTree::BTreeNode::getPred(int idx) {
     BTreeNode *cur = C[idx];
     while (!cur->leaf)
         cur = cur->C[cur->n];
     return cur->keys[cur->n - 1];
 }
 
-int BTreeNode::getSucc(int idx) {
+int BTree::BTreeNode::getSucc(int idx) {
     BTreeNode *cur = C[idx + 1];
     while (!cur->leaf)
         cur = cur->C[0];
     return cur->keys[0];
 }
 
-void BTreeNode::fill(int idx) {
+void BTree::BTreeNode::fill(int idx) {
     if (idx != 0 && C[idx - 1]->n >= T)
         borrowFromPrev(idx);
     else if (idx != n && C[idx + 1]->n >= T)
@@ -265,7 +268,7 @@ void BTreeNode::fill(int idx) {
     }
 }
 
-void BTreeNode::borrowFromPrev(int idx) {
+void BTree::BTreeNode::borrowFromPrev(int idx) {
     BTreeNode *child = C[idx];
     BTreeNode *sibling = C[idx - 1];
 
@@ -288,7 +291,7 @@ void BTreeNode::borrowFromPrev(int idx) {
     sibling->n -= 1;
 }
 
-void BTreeNode::borrowFromNext(int idx) {
+void BTree::BTreeNode::borrowFromNext(int idx) {
     BTreeNode *child = C[idx];
     BTreeNode *sibling = C[idx + 1];
 
@@ -311,7 +314,7 @@ void BTreeNode::borrowFromNext(int idx) {
     sibling->n -= 1;
 }
 
-void BTreeNode::merge(int idx) {
+void BTree::BTreeNode::merge(int idx) {
     BTreeNode *child = C[idx];
     BTreeNode *sibling = C[idx + 1];
 
