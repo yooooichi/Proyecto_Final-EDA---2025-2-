@@ -13,6 +13,21 @@ public:
 
     BTreeNode(bool _leaf);
 
+    // destructor de BTreeNode
+    ~BTreeNode() {
+        // se libera la memoria de los nodos hijos recursivamente
+        if (!leaf) {
+            for (int i = 0; i <= n; i++) {
+                // C[i] es un puntero a otro BTreeNode
+                // al hacer 'delete', se llamará a su propio destructor.
+                delete C[i];
+            }
+        }
+        // liberar la memoria de los arrays de este nodo
+        delete[] keys;
+        delete[] C;
+    }
+
     void traverse();
     void insertNonFull(int k);
     void splitChild(int i, BTreeNode *y);
@@ -38,6 +53,12 @@ public:
     BTree() {
         root = nullptr;
         t = T;
+    }
+
+    // destructor de BTree
+    ~BTree() {
+        if(root != nullptr)
+            delete root; // inicia la destrucción recursiva
     }
 
     void traverse() {
@@ -153,7 +174,13 @@ void BTree::remove(int k) {
             root = nullptr;
         else
             root = root->C[0];
-        delete tmp;
+
+        // se 'desconecta' al hijo del padre antes de borrar 'tmp'.
+        // ya que sino, el destructor de 'tmp' borrará C[0], el cual es el nuevo root.
+        if (!tmp->leaf)
+            tmp->C[0] = nullptr;
+
+        delete tmp; //antes no habia problemas ya que no existía un destructor recursivo
     }
 }
 
@@ -296,8 +323,13 @@ void BTreeNode::merge(int idx) {
         child->keys[i + t] = sibling->keys[i];
 
     if (!child->leaf) {
-        for (int i = 0; i <= sibling->n; ++i)
-            child->C[i + t] = sibling->C[i];
+        for (int i = 0; i <= sibling->n; ++i){
+            child->C[i + t] = sibling->C[i]; //'child' adopta al hijo C[i] de 'sibling'
+
+            // se 'desconecta' al hijo de 'sibling'
+            // para que el destructor de 'sibling' no lo borre
+            sibling->C[i] = nullptr; 
+        }
     }
 
     for (int i = idx + 1; i < n; ++i)
